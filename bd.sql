@@ -14,6 +14,7 @@ CREATE TABLE if not exists Campus.students (
     FOREIGN KEY (room) REFERENCES rooms(id)
 );
 
+
 CREATE INDEX idx_rooms ON Campus.students(room);
-CREATE INDEX idx_rooms ON Campus.students(room);
+CREATE INDEX idx_birthday ON Campus.students(birthday);
 
