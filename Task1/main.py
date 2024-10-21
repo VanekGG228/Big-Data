@@ -1,12 +1,20 @@
 from save_To_Json import SaveToJson
 from save_To_XML import SaveToXML
-from students_parser import StudentParser
-from rooms_parser import RoomParser
+from queries_parsers import QueriesParser
 from database_manager import DatabaseManager
+from dotenv import load_dotenv 
+import os
 
 class Handler:
     def __init__(self):
-        self.db = DatabaseManager("Campus", "localhost", 3306, "root", "Val81248124val")
+        load_dotenv()        
+        db_name = os.getenv("DB_NAME")
+        db_host = os.getenv("DB_HOST")
+        db_port = os.getenv("DB_PORT")
+        db_user = os.getenv("DB_USER")
+        db_password = os.getenv("DB_PASSWORD")
+        
+        self.db = DatabaseManager(db_name, db_host, int(db_port), db_user, db_password)
 
     def add(self,rooms_path, students_path):
         self.db.add_data(rooms_path,students_path)
@@ -26,20 +34,51 @@ class Handler:
             print(rooms[i])
         return rooms
 
-    def save_rooms_to_json(self, file_path):
-        SaveToJson.save_table_to_json(RoomParser(self.db.get_data_rooms()), file_path)
+    def students_count_json(self, file_path):
+        data = self.db.get_room_student_counts()
+        SaveToJson.save_table_to_json(QueriesParser(data,["room","amount"]),file_path)
 
-    def save_rooms_to_xml(self, file_path):
-        SaveToXML.save_table_to_xml(RoomParser(self.db.get_data_rooms()), file_path)
+    def students_count_xml(self, file_path):
+        data = self.db.get_room_student_counts()
+        SaveToXML.save_table_to_xml(QueriesParser(data,["room","amount"]),file_path,"students_count","ROOM")
 
-    def save_students_to_json(self, file_path):
-        SaveToJson.save_table_to_json(StudentParser(self.db.get_data_students()), file_path)
 
-    def save_students_to_xml(self, file_path):
-        SaveToXML.save_table_to_xml(StudentParser(self.db.get_data_students()), file_path)
+    def room_age_json(self, file_path):
+        data = self.db.get_top_5_youngest_rooms()
+        SaveToJson.save_table_to_json(QueriesParser(data,["room","age"]),file_path)
 
+    def room_age_xml(self, file_path):
+        data = self.db.get_top_5_youngest_rooms()
+        SaveToXML.save_table_to_xml(QueriesParser(data,["room","age"]),file_path,"rooms_average_age","ROOM")
+
+
+    def room_diff_json(self, file_path):
+        data = self.db.get_top_5_age_difference_rooms()
+        SaveToJson.save_table_to_json(QueriesParser(data,["room","diff"]),file_path)
+
+    def room_diff_xml(self, file_path):
+        data = self.db.get_top_5_age_difference_rooms()
+        SaveToXML.save_table_to_xml(QueriesParser(data,["room","diff"]),file_path,"rooms_difference_age","ROOM")
+
+
+    def room_FM_json(self, file_path):
+        data = self.db.get_mixed_gender_rooms()
+        SaveToJson.save_table_to_json(QueriesParser(data,["room"]),file_path)
+
+    def room_FM_xml(self, file_path):
+        data = self.db.get_mixed_gender_rooms()
+        SaveToXML.save_table_to_xml(QueriesParser(data,["room"]),file_path,"rooms_FM","ROOM")    
+        
 handler = Handler()
+queries = [
+    "Список комнат и количество студентов в каждой из них  -  1",
+    "5 комнат, где самый маленький средний возраст студентов  -  2",
+    "5 комнат с самой большой разницей в возрасте студентов  -  3",
+    "Список комнат, где живут разнополые студенты  -  4"
+]
 
+for query in queries:
+    print(query)
 
 while (1):
     string = input()
@@ -52,16 +91,25 @@ while (1):
     elif string == "format":
         string = input("Type ")
         file_path = input("File path ")
-        table = input("Table ")
+        query = input("Query ")
         if string == "json":
-            if table == "rooms":
-                handler.save_rooms_to_json(file_path)
+            if query == "1":
+                handler.students_count_json(file_path)
+            elif query == "2":
+                handler.room_age_json(file_path)
+            elif query == "3":
+                handler.room_diff_json(file_path)  
             else:
-                handler.save_students_to_json(file_path)    
+                handler.room_FM_json(file_path) 
         else:
-            if table == "rooms":
-                handler.save_rooms_to_xml(file_path)
+            if query == "1":
+                handler.students_count_xml(file_path)
+            elif query == "2":
+                handler.room_age_xml(file_path)
+            elif query == "3":
+                handler.room_diff_xml(file_path)  
             else:
-                handler.save_students_to_xml(file_path) 
+                handler.room_FM_xml(file_path) 
+                
     else:
         break            

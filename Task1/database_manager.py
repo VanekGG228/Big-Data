@@ -18,6 +18,48 @@ class DatabaseManager:
         self.__insert_table(self.tables[0],path_rooms)
         self.__insert_table(self.tables[1],path_students)
         self.connection.commit()
+
+    def get_room_student_counts(self):
+        query = f"""
+        SELECT room, COUNT(id) 
+        FROM {self.db_name}.students
+        GROUP BY room;
+        """
+        self.cursor.execute(query)      
+        return self.cursor.fetchall()
+
+    def get_top_5_youngest_rooms(self):
+        query = f"""
+        SELECT room, AVG(DATEDIFF(CURDATE(), birthday) / 365) as age 
+        FROM {self.db_name}.students
+        GROUP BY room
+        ORDER BY age
+        LIMIT 5;
+        """
+        self.cursor.execute(query)      
+        return self.cursor.fetchall()
+
+    def get_top_5_age_difference_rooms(self):
+        query = f"""
+        SELECT room, MAX(DATEDIFF(CURDATE(), birthday)/365) - MIN(DATEDIFF(CURDATE(), birthday)/365) AS diff
+        FROM {self.db_name}.students 
+        GROUP BY room
+        ORDER BY diff DESC
+        LIMIT 5;
+        """
+        self.cursor.execute(query)      
+        return self.cursor.fetchall()
+
+    def get_mixed_gender_rooms(self):
+        query = f"""
+        SELECT room 
+        FROM {self.db_name}.students
+        GROUP BY room
+        HAVING COUNT(DISTINCT sex) = 2;
+        """
+        self.cursor.execute(query)      
+        return self.cursor.fetchall()
+        
     
     def get_data_rooms(self):
         self.cursor.execute(f"SELECT * FROM {self.db_name}.rooms ")  
@@ -30,4 +72,3 @@ class DatabaseManager:
     def __insert_table(self,table,file_path):
         table.loadJson(file_path)
         self.cursor.executemany(table.sql_insert(),table.getStrings())  
- 
