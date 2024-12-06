@@ -1,0 +1,4 @@
+*.csv
+venv
+airflow_home
+.idea
